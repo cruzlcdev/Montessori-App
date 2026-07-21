@@ -1,0 +1,374 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userPath(schoolId) {
+      return /databases/$(database)/documents/schools/$(schoolId)/users/$(request.auth.uid);
+    }
+
+    function evaluationPath(schoolId, evaluationId) {
+      return /databases/$(database)/documents/schools/$(schoolId)/evaluations/$(evaluationId);
+    }
+
+    function studentPath(schoolId, studentId) {
+      return /databases/$(database)/documents/schools/$(schoolId)/students/$(studentId);
+    }
+
+    function subjectPath(schoolId, subjectId) {
+      return /databases/$(database)/documents/schools/$(schoolId)/subjects/$(subjectId);
+    }
+
+    function isSchoolMember(schoolId) {
+      return signedIn() && exists(userPath(schoolId));
+    }
+
+    function isActiveSchoolMember(schoolId) {
+      return isSchoolMember(schoolId)
+        && get(userPath(schoolId)).data.status == 'active';
+    }
+
+    function userRole(schoolId) {
+      return get(userPath(schoolId)).data.role;
+    }
+
+    function isAdmin(schoolId) {
+      return isActiveSchoolMember(schoolId)
+        && (userRole(schoolId) == 'owner' || userRole(schoolId) == 'admin');
+    }
+
+    function isTeacher(schoolId) {
+      return isActiveSchoolMember(schoolId)
+        && userRole(schoolId) == 'teacher';
+    }
+
+    function isParent(schoolId) {
+      return isActiveSchoolMember(schoolId)
+        && userRole(schoolId) == 'parent';
+    }
+
+    function hasGroupAccess(schoolId, groupId) {
+      return isAdmin(schoolId)
+        || (isTeacher(schoolId)
+          && get(userPath(schoolId)).data.groupIds is list
+          && groupId in get(userPath(schoolId)).data.groupIds);
+    }
+
+    function hasStudentAccess(schoolId, studentId) {
+      return isAdmin(schoolId)
+        || (isParent(schoolId)
+          && get(userPath(schoolId)).data.studentIds is list
+          && studentId in get(userPath(schoolId)).data.studentIds);
+    }
+
+    function isPublishedNews() {
+      return resource.data.status == 'published';
+    }
+
+    function isPublishedCalendarEvent() {
+      return resource.data.status == 'published';
+    }
+
+    function hasAudienceAccess(schoolId) {
+      return resource.data.targetGroupIds is list
+        && (resource.data.targetGroupIds.hasAny(['all'])
+          || (get(userPath(schoolId)).data.groupIds is list
+            && resource.data.targetGroupIds.hasAny(get(userPath(schoolId)).data.groupIds)));
+    }
+
+    function isSchoolWideNews() {
+      return resource.data.visibility == 'school';
+    }
+
+    function isSchoolWideCalendarEvent() {
+      return resource.data.visibility == 'school';
+    }
+
+    function validNewsCreate(schoolId) {
+      return request.resource.data.schoolId == schoolId
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 120
+        && request.resource.data.content is string
+        && request.resource.data.content.size() > 0
+        && request.resource.data.content.size() <= 5000
+        && request.resource.data.targetGroupIds is list
+        && request.resource.data.targetGroupIds.size() > 0
+        && request.resource.data.visibility in ['school', 'groups']
+        && ((request.resource.data.visibility == 'school'
+            && request.resource.data.targetGroupIds.hasAny(['all']))
+          || (request.resource.data.visibility == 'groups'
+            && !request.resource.data.targetGroupIds.hasAny(['all'])))
+        && request.resource.data.authorId == request.auth.uid
+        && request.resource.data.status == 'published'
+        && request.resource.data.publishedAt is timestamp
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp;
+    }
+
+    function validNewsUpdate(schoolId) {
+      return request.resource.data.schoolId == schoolId
+        && request.resource.data.authorId is string
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 120
+        && request.resource.data.content is string
+        && request.resource.data.content.size() > 0
+        && request.resource.data.content.size() <= 5000
+        && request.resource.data.targetGroupIds is list
+        && request.resource.data.targetGroupIds.size() > 0
+        && request.resource.data.visibility in ['school', 'groups']
+        && ((request.resource.data.visibility == 'school'
+            && request.resource.data.targetGroupIds.hasAny(['all']))
+          || (request.resource.data.visibility == 'groups'
+            && !request.resource.data.targetGroupIds.hasAny(['all'])))
+        && request.resource.data.status in ['draft', 'published', 'archived']
+        && request.resource.data.updatedAt is timestamp;
+    }
+
+    function validCalendarEventCreate(schoolId) {
+      return request.resource.data.schoolId == schoolId
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 120
+        && request.resource.data.description is string
+        && request.resource.data.description.size() <= 1000
+        && request.resource.data.eventDate is timestamp
+        && (request.resource.data.startTime == null || request.resource.data.startTime is string)
+        && (request.resource.data.endTime == null || request.resource.data.endTime is string)
+        && request.resource.data.status == 'published'
+        && request.resource.data.visibility in ['school', 'groups']
+        && request.resource.data.targetGroupIds is list
+        && request.resource.data.targetGroupIds.size() > 0
+        && ((request.resource.data.visibility == 'school'
+            && request.resource.data.targetGroupIds.hasAny(['all']))
+          || (request.resource.data.visibility == 'groups'
+            && !request.resource.data.targetGroupIds.hasAny(['all'])))
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp;
+    }
+
+    function validCalendarEventUpdate(schoolId) {
+      return request.resource.data.schoolId == schoolId
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 120
+        && request.resource.data.description is string
+        && request.resource.data.description.size() <= 1000
+        && request.resource.data.eventDate is timestamp
+        && (request.resource.data.startTime == null || request.resource.data.startTime is string)
+        && (request.resource.data.endTime == null || request.resource.data.endTime is string)
+        && request.resource.data.status in ['draft', 'published', 'archived']
+        && request.resource.data.visibility in ['school', 'groups']
+        && request.resource.data.targetGroupIds is list
+        && request.resource.data.targetGroupIds.size() > 0
+        && ((request.resource.data.visibility == 'school'
+            && request.resource.data.targetGroupIds.hasAny(['all']))
+          || (request.resource.data.visibility == 'groups'
+            && !request.resource.data.targetGroupIds.hasAny(['all'])))
+        && request.resource.data.createdBy is string
+        && request.resource.data.updatedAt is timestamp;
+    }
+
+    function validGroupWrite(schoolId) {
+      return request.resource.data.schoolId == schoolId
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 120
+        && request.resource.data.level is string
+        && request.resource.data.status in ['active', 'inactive', 'archived']
+        && request.resource.data.sortOrder is int
+        && request.resource.data.initials is string
+        && request.resource.data.initials.size() > 0
+        && request.resource.data.initials.size() <= 4
+        && request.resource.data.colorHex is string;
+    }
+
+    function validStudentWrite(schoolId) {
+      return request.resource.data.schoolId == schoolId
+        && request.resource.data.groupId is string
+        && request.resource.data.fullName is string
+        && request.resource.data.fullName.size() > 0
+        && request.resource.data.fullName.size() <= 180
+        && request.resource.data.firstName is string
+        && request.resource.data.lastName is string
+        && request.resource.data.status in ['active', 'inactive', 'archived']
+        && (request.resource.data.birthDate == null || request.resource.data.birthDate is timestamp)
+        && (request.resource.data.enrollmentDate == null || request.resource.data.enrollmentDate is timestamp);
+    }
+
+    function validTeacherWrite(schoolId) {
+      return request.resource.data.schoolId == schoolId
+        && request.resource.data.fullName is string
+        && request.resource.data.fullName.size() > 0
+        && request.resource.data.fullName.size() <= 180
+        && request.resource.data.status in ['active', 'inactive', 'archived']
+        && request.resource.data.groupIds is list;
+    }
+
+    function validSubjectWrite(schoolId) {
+      return request.resource.data.schoolId == schoolId
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 120
+        && request.resource.data.type in ['qualitative', 'quantitative']
+        && request.resource.data.status in ['active', 'inactive', 'archived']
+        && request.resource.data.groupIds is list
+        && request.resource.data.sortOrder is int;
+    }
+
+    function validAcademicPeriodWrite(schoolId) {
+      return request.resource.data.schoolId == schoolId
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 80
+        && request.resource.data.termNumber is int
+        && request.resource.data.termNumber >= 1
+        && request.resource.data.termNumber <= 6
+        && request.resource.data.cycle is string
+        && request.resource.data.status in ['active', 'inactive', 'archived']
+        && request.resource.data.startDate is timestamp
+        && request.resource.data.endDate is timestamp;
+    }
+
+    function validEvaluationWrite(schoolId) {
+      return request.resource.data.schoolId == schoolId
+        && request.resource.data.groupId is string
+        && request.resource.data.studentId is string
+        && request.resource.data.studentName is string
+        && request.resource.data.subjectId is string
+        && request.resource.data.subjectName is string
+        && request.resource.data.termNumber is int
+        && request.resource.data.termNumber >= 1
+        && request.resource.data.termNumber <= 6
+        && request.resource.data.value is string
+        && request.resource.data.feedback is string
+        && request.resource.data.feedback.size() <= 500
+        && request.resource.data.updatedBy == request.auth.uid
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp;
+    }
+
+    function validEvaluationTarget(schoolId) {
+      return exists(studentPath(schoolId, request.resource.data.studentId))
+        && get(studentPath(schoolId, request.resource.data.studentId)).data.groupId == request.resource.data.groupId
+        && get(studentPath(schoolId, request.resource.data.studentId)).data.status == 'active'
+        && exists(subjectPath(schoolId, request.resource.data.subjectId))
+        && get(subjectPath(schoolId, request.resource.data.subjectId)).data.status == 'active'
+        && get(subjectPath(schoolId, request.resource.data.subjectId)).data.groupIds is list
+        && request.resource.data.groupId in get(subjectPath(schoolId, request.resource.data.subjectId)).data.groupIds;
+    }
+
+    match /schools/{schoolId} {
+      allow read: if isActiveSchoolMember(schoolId);
+      allow create, update, delete: if false;
+
+      match /users/{userId} {
+        allow read: if isAdmin(schoolId) || (signedIn() && request.auth.uid == userId);
+        allow create, update, delete: if isAdmin(schoolId);
+      }
+
+      match /news/{newsId} {
+        allow get: if isAdmin(schoolId)
+          || (isActiveSchoolMember(schoolId)
+            && isPublishedNews()
+            && hasAudienceAccess(schoolId));
+        allow list: if isAdmin(schoolId)
+          || (isActiveSchoolMember(schoolId)
+            && isPublishedNews()
+            && isSchoolWideNews());
+        allow create: if isAdmin(schoolId) && validNewsCreate(schoolId);
+        allow update: if isAdmin(schoolId) && validNewsUpdate(schoolId);
+        allow delete: if isAdmin(schoolId);
+      }
+
+      match /newsAudience/{groupId}/items/{newsId} {
+        allow get, list: if isAdmin(schoolId)
+          || (isActiveSchoolMember(schoolId)
+            && get(userPath(schoolId)).data.groupIds is list
+            && groupId in get(userPath(schoolId)).data.groupIds
+            && isPublishedNews());
+        allow create: if isAdmin(schoolId) && validNewsCreate(schoolId);
+        allow update: if isAdmin(schoolId) && validNewsUpdate(schoolId);
+        allow delete: if isAdmin(schoolId);
+      }
+
+      match /calendarEvents/{eventId} {
+        allow get: if isAdmin(schoolId)
+          || (isActiveSchoolMember(schoolId)
+            && isPublishedCalendarEvent()
+            && hasAudienceAccess(schoolId));
+        allow list: if isAdmin(schoolId)
+          || (isActiveSchoolMember(schoolId)
+            && isPublishedCalendarEvent()
+            && isSchoolWideCalendarEvent());
+        allow create: if isAdmin(schoolId) && validCalendarEventCreate(schoolId);
+        allow update: if isAdmin(schoolId) && validCalendarEventUpdate(schoolId);
+        allow delete: if isAdmin(schoolId);
+      }
+
+      match /calendarAudience/{groupId}/items/{eventId} {
+        allow get, list: if isAdmin(schoolId)
+          || (isActiveSchoolMember(schoolId)
+            && get(userPath(schoolId)).data.groupIds is list
+            && groupId in get(userPath(schoolId)).data.groupIds
+            && isPublishedCalendarEvent());
+        allow create: if isAdmin(schoolId) && validCalendarEventCreate(schoolId);
+        allow update: if isAdmin(schoolId) && validCalendarEventUpdate(schoolId);
+        allow delete: if isAdmin(schoolId);
+      }
+
+      match /groups/{groupId} {
+        allow read: if isActiveSchoolMember(schoolId);
+        allow create, update: if isAdmin(schoolId) && validGroupWrite(schoolId);
+        allow delete: if isAdmin(schoolId);
+      }
+
+      match /students/{studentId} {
+        allow read: if hasGroupAccess(schoolId, resource.data.groupId)
+          || hasStudentAccess(schoolId, studentId);
+        allow create, update: if isAdmin(schoolId) && validStudentWrite(schoolId);
+        allow delete: if isAdmin(schoolId);
+      }
+
+      match /teachers/{teacherId} {
+        allow read: if isAdmin(schoolId);
+        allow create, update: if isAdmin(schoolId) && validTeacherWrite(schoolId);
+        allow delete: if isAdmin(schoolId);
+      }
+
+      match /subjects/{subjectId} {
+        allow read: if isActiveSchoolMember(schoolId);
+        allow create, update: if isAdmin(schoolId) && validSubjectWrite(schoolId);
+        allow delete: if isAdmin(schoolId);
+      }
+
+      match /academicPeriods/{periodId} {
+        allow read: if isActiveSchoolMember(schoolId);
+        allow create, update: if isAdmin(schoolId) && validAcademicPeriodWrite(schoolId);
+        allow delete: if isAdmin(schoolId);
+      }
+
+      match /evaluations/{evaluationId} {
+        allow get: if isActiveSchoolMember(schoolId)
+          && (!exists(evaluationPath(schoolId, evaluationId))
+            || hasGroupAccess(schoolId, resource.data.groupId)
+            || hasStudentAccess(schoolId, resource.data.studentId));
+        allow list: if false;
+        allow create, update: if isTeacher(schoolId)
+          && validEvaluationWrite(schoolId)
+          && validEvaluationTarget(schoolId)
+          && hasGroupAccess(schoolId, request.resource.data.groupId);
+        allow delete: if false;
+      }
+
+      match /{document=**} {
+        allow read, write: if false;
+      }
+    }
+  }
+}

@@ -1,0 +1,83 @@
+import 'package:flutter/widgets.dart';
+import 'package:lucide_flutter/lucide_flutter.dart';
+
+/// Catálogo visual del panel administrativo.
+///
+/// Mantener los iconos en un solo lugar evita mezclar familias visuales y
+/// permite ajustar el lenguaje del panel sin modificar cada módulo.
+abstract final class AdminIcons {
+  static const IconData addRounded = LucideIcons.plus;
+  static const IconData adminPanelSettingsOutlined = LucideIcons.shieldCheck;
+  static const IconData adminPanelSettingsRounded = LucideIcons.shieldCheck;
+  static const IconData archiveRounded = LucideIcons.archive;
+  static const IconData arrowOutwardRounded = LucideIcons.arrowUpRight;
+  static const IconData autoGraphRounded = LucideIcons.chartSpline;
+  static const IconData badgeRounded = LucideIcons.badge;
+  static const IconData boltRounded = LucideIcons.zap;
+  static const IconData calculateRounded = LucideIcons.calculator;
+  static const IconData calendarMonthRounded = LucideIcons.calendarDays;
+  static const IconData calendarTodayRounded = LucideIcons.calendar;
+  static const IconData campaignRounded = LucideIcons.megaphone;
+  static const IconData checkCircleRounded = LucideIcons.circleCheck;
+  static const IconData checkRounded = LucideIcons.check;
+  static const IconData chevronLeftRounded = LucideIcons.chevronLeft;
+  static const IconData chevronRightRounded = LucideIcons.chevronRight;
+  static const IconData circleRounded = LucideIcons.circle;
+  static const IconData closeRounded = LucideIcons.x;
+  static const IconData cloudDoneRounded = LucideIcons.cloudCheck;
+  static const IconData coPresentRounded = LucideIcons.presentation;
+  static const IconData contactMailRounded = LucideIcons.contact;
+  static const IconData contrastRounded = LucideIcons.contrast;
+  static const IconData darkModeRounded = LucideIcons.moon;
+  static const IconData dashboardRounded = LucideIcons.layoutDashboard;
+  static const IconData deleteOutlineRounded = LucideIcons.trash2;
+  static const IconData devicesRounded = LucideIcons.monitorSmartphone;
+  static const IconData editCalendarRounded = LucideIcons.calendarCog;
+  static const IconData editNoteRounded = LucideIcons.filePenLine;
+  static const IconData editRounded = LucideIcons.pencil;
+  static const IconData errorOutlineRounded = LucideIcons.circleAlert;
+  static const IconData eventAvailableRounded = LucideIcons.calendarCheck2;
+  static const IconData eventBusyRounded = LucideIcons.calendarX2;
+  static const IconData eventRounded = LucideIcons.calendarDays;
+  static const IconData faceRounded = LucideIcons.userRound;
+  static const IconData familyRestroomRounded = LucideIcons.usersRound;
+  static const IconData groups2Rounded = LucideIcons.usersRound;
+  static const IconData groupsRounded = LucideIcons.users;
+  static const IconData infoOutlineRounded = LucideIcons.info;
+  static const IconData insightsRounded = LucideIcons.chartNoAxesCombined;
+  static const IconData keyboardArrowDownRounded = LucideIcons.chevronDown;
+  static const IconData keyboardRounded = LucideIcons.keyboard;
+  static const IconData lightModeRounded = LucideIcons.sun;
+  static const IconData lockRounded = LucideIcons.lock;
+  static const IconData logoutRounded = LucideIcons.logOut;
+  static const IconData mailRounded = LucideIcons.mail;
+  static const IconData manRounded = LucideIcons.userRound;
+  static const IconData markEmailReadRounded = LucideIcons.mailCheck;
+  static const IconData markEmailUnreadRounded = LucideIcons.mail;
+  static const IconData menuBookRounded = LucideIcons.bookOpen;
+  static const IconData noteAltRounded = LucideIcons.fileText;
+  static const IconData paletteRounded = LucideIcons.palette;
+  static const IconData pauseCircleOutlineRounded = LucideIcons.circlePause;
+  static const IconData pauseCircleRounded = LucideIcons.circlePause;
+  static const IconData personAddAlt1Rounded = LucideIcons.userPlus;
+  static const IconData personRounded = LucideIcons.user;
+  static const IconData playCircleOutlineRounded = LucideIcons.circlePlay;
+  static const IconData psychologyAltRounded = LucideIcons.brain;
+  static const IconData publishRounded = LucideIcons.send;
+  static const IconData rateReviewRounded = LucideIcons.messageSquareText;
+  static const IconData scheduleRounded = LucideIcons.clock;
+  static const IconData schoolOutlined = LucideIcons.school;
+  static const IconData schoolRounded = LucideIcons.school;
+  static const IconData searchRounded = LucideIcons.search;
+  static const IconData settingsSuggestRounded = LucideIcons.settings2;
+  static const IconData shieldOutlined = LucideIcons.shieldCheck;
+  static const IconData titleRounded = LucideIcons.type;
+  static const IconData todayRounded = LucideIcons.calendarDays;
+  static const IconData tuneRounded = LucideIcons.slidersHorizontal;
+  static const IconData uploadRounded = LucideIcons.upload;
+  static const IconData verifiedUserRounded = LucideIcons.badgeCheck;
+  static const IconData visibilityOffRounded = LucideIcons.eyeOff;
+  static const IconData visibilityRounded = LucideIcons.eye;
+  static const IconData warningAmberRounded = LucideIcons.triangleAlert;
+  static const IconData womanRounded = LucideIcons.userRound;
+}

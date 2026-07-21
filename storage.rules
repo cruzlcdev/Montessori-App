@@ -1,0 +1,38 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isSchoolMember(schoolId) {
+      return signedIn()
+        && firestore.exists(
+          /databases/(default)/documents/schools/$(schoolId)/users/$(request.auth.uid)
+        );
+    }
+
+    function userRole(schoolId) {
+      return firestore.get(
+        /databases/(default)/documents/schools/$(schoolId)/users/$(request.auth.uid)
+      ).data.role;
+    }
+
+    function isAdmin(schoolId) {
+      return isSchoolMember(schoolId)
+        && (userRole(schoolId) == 'owner' || userRole(schoolId) == 'admin');
+    }
+
+    match /schools/{schoolId}/news_images/{fileName} {
+      allow read: if isSchoolMember(schoolId);
+      allow write: if isAdmin(schoolId)
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
